@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Reading TYPE_STEP_COUNTER is a runtime permission on API 29+. No GMS, no Health
+         Connect — this is plain AOSP sensor access. -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- Re-arm the sampling alarm after a reboot; alarms do not survive one. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="Steps"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.BrightSteps">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="Steps"
+            android:theme="@style/Theme.BrightSteps">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Wakes every ~15 min to read the counter, and keeps its own alarm chain alive
+             across a reboot and across an update landing on a closed app. Not exported: the
+             system delivers these protected broadcasts to us regardless, and the sampling
+             alarm targets this component explicitly. -->
+        <receiver
+            android:name=".alarm.SampleReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Read-only step data for other Light apps (BrightNotebook). Exported so they can
+             reach it; every caller is checked against an allowlist inside the provider, since
+             each Light app is signed with its own key and no shared signature exists to gate
+             on. -->
+        <provider
+            android:name=".provider.StepsProvider"
+            android:authorities="com.gios.brightsteps.steps"
+            android:exported="true" />
+    </application>
+</manifest>

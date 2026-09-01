@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  BrightSteps launcher mark: four ascending bars, a day's steps climbing. One of the unified
+  Bright* set: 108 canvas, 18..90 safe zone, white on black, no greys and no colour.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M22,64 H34 V84 H22 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M39,52 H51 V84 H39 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M56,40 H68 V84 H56 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M73,28 H85 V84 H73 Z" />
+</vector>
