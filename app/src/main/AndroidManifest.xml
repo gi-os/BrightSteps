@@ -6,6 +6,17 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <!-- Re-arm the sampling alarm after a reboot; alarms do not survive one. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- One exact alarm, at local midnight. A day's total is decided by which readings bracket
+         the boundary, so this is the one firing that must not drift. USE_EXACT_ALARM is granted
+         at install on API 33+; SCHEDULE_EXACT_ALARM covers 31–32, where it is granted by
+         default. Below 31 no permission is needed. Everything else stays inexact. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"
+        android:minSdkVersion="33" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <!-- Only ever used to *ask*: the diagnostics screen opens the system prompt when the app is
+         still in the optimized bucket, which is where deferred readings come from. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
 

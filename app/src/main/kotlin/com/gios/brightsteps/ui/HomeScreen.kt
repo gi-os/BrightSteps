@@ -38,28 +38,41 @@ import kotlin.math.sqrt
 fun HomeScreen(
     state: StepsUiState,
     granted: Boolean,
+    permissionLost: Boolean,
     onGrant: () -> Unit,
     onOpenGoal: () -> Unit,
+    onOpenDiagnostics: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
                 !granted -> PermissionPrompt(onGrant)
                 !state.sensorAvailable -> EmptyState("This phone has no step sensor.")
-                else -> Content(state)
+                else -> Content(state, permissionLost)
             }
         }
-        ActionBar(listOf(BarAction("GOAL", onOpenGoal)))
+        ActionBar(listOf(BarAction("GOAL", onOpenGoal), BarAction("CHECK", onOpenDiagnostics)))
     }
 }
 
 @Composable
-private fun Content(state: StepsUiState) {
+private fun Content(state: StepsUiState, permissionLost: Boolean) {
     Column(
         Modifier.fillMaxSize().padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        // A gap in the record the user has no other way of learning about: while the permission
+        // was revoked nothing was counted, and the days behind the ring are short because of it.
+        if (permissionLost) {
+            Text(
+                "COUNTING RESUMED — EARLIER DAYS ARE INCOMPLETE",
+                style = MaterialTheme.typography.labelSmall,
+                color = Dim,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(20.dp))
+        }
         GoalRing(today = state.today, goal = state.goal)
         Spacer(Modifier.height(10.dp))
         Text(

@@ -2,6 +2,7 @@ package com.gios.brightsteps
 
 import com.gios.brightsteps.steps.Sample
 import com.gios.brightsteps.steps.StepMath
+import com.gios.brightsteps.steps.Verdict
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.time.LocalDate
@@ -37,7 +38,7 @@ class StepMathTest {
             s(0, at(2026, 6, 1, 23, 30)),
             s(400, at(2026, 6, 2, 0, 30)),
         )
-        val totals = StepMath.dayTotals(StepMath.hourlyBuckets(samples, ny), ny)
+        val totals = StepMath.dayTotals(samples, ny)
         assertEquals(200L, totals[LocalDate.of(2026, 6, 1)])
         assertEquals(200L, totals[LocalDate.of(2026, 6, 2)])
     }
@@ -95,11 +96,92 @@ class StepMathTest {
             s(0, at(2026, 3, 8, 0, 30)),
             s(2300, at(2026, 3, 8, 23, 30)),
         )
-        val totals = StepMath.dayTotals(StepMath.hourlyBuckets(samples, ny), ny)
+        val totals = StepMath.dayTotals(samples, ny)
         // Everything belongs to the 8th; nothing bleeds onto neighbouring days. The daily sum
         // can drift a few steps from 2300 because each of the ~23 hour buckets is rounded to a
         // whole step — that is fine for a step count, so the assertion is tolerant.
         assertEquals(setOf(LocalDate.of(2026, 3, 8)), totals.keys)
-        assertTrue(totals[LocalDate.of(2026, 3, 8)]!! in 2275..2325)
+        // Exact now. The old code rounded each of the ~23 hour buckets to a whole step before
+        // summing them, so the day drifted by up to half a step per hour and the assertion here
+        // had to be written loose. Totalling the unrounded fractions and rounding once removes
+        // the drift entirely.
+        assertEquals(2300L, totals[LocalDate.of(2026, 3, 8)])
+    }
+
+    @Test
+    fun `a reboot the counter cannot see does not lose the steps before it`() {
+        val boot1 = at(2026, 6, 1, 0)
+        val boot2 = at(2026, 6, 1, 12)
+        val samples = listOf(
+            // 8,000 steps on the clock by late morning...
+            Sample(8000, at(2026, 6, 1, 11, 0), at(2026, 6, 1, 11, 0) - boot1),
+            // ...phone reboots at noon, and by evening the fresh counter has climbed past 8,000.
+            Sample(9000, at(2026, 6, 1, 20, 0), at(2026, 6, 1, 20, 0) - boot2),
+        )
+        // The counter never fell, so the old "counter went down = reboot" rule saw an ordinary
+        // delta of 9000 - 8000 and credited 1,000 steps for the day. Eight thousand vanished.
+        // elapsedRealtime *did* fall, which is what actually proves a reboot happened.
+        assertEquals(9000L, StepMath.dayTotal(samples, LocalDate.of(2026, 6, 1), ny))
+        assertTrue(StepMath.rebooted(samples[0], samples[1]))
+    }
+
+    @Test
+    fun `steps after a reboot are credited to the time since the boot`() {
+        val boot1 = at(2026, 6, 1, 0)
+        val boot2 = at(2026, 6, 2, 6) // switched back on at 06:00 on the 2nd
+        val samples = listOf(
+            Sample(3000, at(2026, 6, 1, 20, 0), at(2026, 6, 1, 20, 0) - boot1),
+            Sample(600, at(2026, 6, 2, 8, 0), at(2026, 6, 2, 8, 0) - boot2),
+        )
+        val totals = StepMath.dayTotals(samples, ny)
+        // All 600 were necessarily walked in the two hours since the boot. Spreading them across
+        // the whole 20:00-08:00 interval would have put a third of them on the 1st — hours the
+        // phone spent switched off.
+        assertEquals(600L, totals[LocalDate.of(2026, 6, 2)])
+        assertEquals(null, totals[LocalDate.of(2026, 6, 1)])
+    }
+
+    @Test
+    fun `an ordinary quiet interval is not read as a reboot`() {
+        // Wall time and uptime advance together; the counter rises. Nothing here is a reboot,
+        // and the slack has to be wide enough that a clock nudge does not trip it.
+        val a = s(1000, at(2026, 6, 1, 9, 0))
+        val b = s(1010, at(2026, 6, 1, 9, 15))
+        assertTrue(!StepMath.rebooted(a, b))
+    }
+
+    @Test
+    fun `a thin spread over many hours is not rounded away`() {
+        // Four steps across twelve hours is a third of a step an hour. Rounding each hour before
+        // summing turned every one of those hours into zero, and the day's total with them.
+        val samples = listOf(
+            s(0, at(2026, 6, 1, 6, 0)),
+            s(4, at(2026, 6, 1, 18, 0)),
+        )
+        assertEquals(4L, StepMath.dayTotal(samples, LocalDate.of(2026, 6, 1), ny))
+    }
+
+    @Test
+    fun `the audit says what was thrown away and why`() {
+        val samples = listOf(
+            s(0, at(2026, 6, 1, 9, 0)),
+            s(5000, at(2026, 6, 3, 9, 0)), // 48h later, past MAX_GAP_MS
+        )
+        val audit = StepMath.audit(samples)
+        assertEquals(1, audit.size)
+        assertEquals(Verdict.GAP_TOO_LONG, audit[0].verdict)
+        assertEquals(5000L, audit[0].rawDelta)
+        assertEquals(0L, audit[0].credited)
+    }
+
+    @Test
+    fun `the audit credits an ordinary interval in full`() {
+        val samples = listOf(
+            s(100, at(2026, 6, 1, 9, 0)),
+            s(400, at(2026, 6, 1, 9, 30)),
+        )
+        val audit = StepMath.audit(samples)
+        assertEquals(Verdict.OK, audit[0].verdict)
+        assertEquals(300L, audit[0].credited)
     }
 }

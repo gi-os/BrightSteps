@@ -37,6 +37,12 @@ fun BrightStepsTheme(content: @Composable () -> Unit) {
         titleMedium = TextStyle(fontFamily = fam, fontSize = 21.sp, fontWeight = FontWeight.Normal),
         bodyLarge = TextStyle(fontFamily = fam, fontSize = 18.sp, fontWeight = FontWeight.Normal),
         bodyMedium = TextStyle(fontFamily = fam, fontSize = 15.sp, fontWeight = FontWeight.Normal),
+        // Explanatory text on the diagnostics page. Declared rather than left to Material's
+        // default, which would quietly fall back to Roboto beside the rest of the app.
+        bodySmall = TextStyle(
+            fontFamily = fam, fontSize = 13.sp, fontWeight = FontWeight.Normal,
+            lineHeight = 19.sp,
+        ),
         labelLarge = TextStyle(
             fontFamily = fam, fontSize = 16.sp, fontWeight = FontWeight.Medium,
             letterSpacing = 2.4.sp,
