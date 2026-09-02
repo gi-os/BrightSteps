@@ -97,6 +97,9 @@ jobs:
           tag_name: v${{ steps.ver.outputs.version }}
           name: BrightSteps v${{ steps.ver.outputs.version }}
           files: out/BrightSteps-v${{ steps.ver.outputs.version }}.apk
+          # Hand-written notes for the release, with the commit list appended under them.
+          # RELEASE_NOTES.md describes the current minor; rewrite it when the minor changes.
+          body_path: RELEASE_NOTES.md
           generate_release_notes: true
           make_latest: true
 
