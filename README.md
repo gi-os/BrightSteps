@@ -56,3 +56,9 @@ Versioning is `v1.x.x`; CI stamps the patch number from the build.
 CI builds and releases on every push to `main`. Unit tests (`StepMath`) gate the build. The
 signing key is committed on purpose and treated as public — Android identifies the app by
 package + certificate, and the real protection is the fingerprint check in CI, not a hidden key.
+
+## Support
+
+These apps are free, open, and built on my own time. Sponsorship pays the bills that don't go away: build servers, test hardware, and the crash reporter that keeps them shipping. Donation or not my code is always free for the world to use.
+
+[Sponsor on GitHub](https://github.com/sponsors/gi-os)
