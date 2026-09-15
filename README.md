@@ -1,5 +1,7 @@
 # BrightSteps
 
+[**⬇ Download the latest APK**](https://github.com/gi-os/BrightSteps/releases/latest) · free, open source.
+
 A step counter for the Light Phone III. It reads the phone's hardware step counter, keeps a
 short history on device, and shows today against a daily goal — no account, no cloud, no Google
 Play Services.
