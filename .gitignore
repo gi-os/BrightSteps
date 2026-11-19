@@ -14,3 +14,5 @@ __pycache__/
 
 # Kotlin plugin drops this in the repo root
 .kotlin/
+*.jks
+*.keystore
